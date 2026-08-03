@@ -120,7 +120,7 @@ export function SupplierFormDialog({
           </SupplierFormField>
 
           <SupplierFormField label="Payment Terms *" error={errors.paymentTerms}>
-            <Select value={formData.paymentTerms} onValueChange={(v) => updateField("paymentTerms", v)}>
+            <Select value={formData.paymentTerms} onValueChange={(v) => updateField("paymentTerms", v ?? "")}>
               <SelectTrigger><SelectValue placeholder="Select payment terms" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Advance Payment">Advance Payment</SelectItem>

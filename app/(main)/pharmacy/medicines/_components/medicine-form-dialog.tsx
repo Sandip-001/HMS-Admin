@@ -84,7 +84,7 @@ export function MedicineFormDialog({
           </MedicineFormField>
 
           <MedicineFormField label="Category *" error={errors.category}>
-            <Select value={formData.category} onValueChange={(v) => updateField("category", v)}>
+            <Select value={formData.category} onValueChange={(v) => updateField("category", v ?? "")}>
               <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
               <SelectContent>
                 {CATEGORY_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -93,7 +93,7 @@ export function MedicineFormDialog({
           </MedicineFormField>
 
           <MedicineFormField label="Brand *" error={errors.brand}>
-            <Select value={formData.brand} onValueChange={(v) => updateField("brand", v)}>
+            <Select value={formData.brand} onValueChange={(v) => updateField("brand", v ?? "")}>
               <SelectTrigger><SelectValue placeholder="Select brand" /></SelectTrigger>
               <SelectContent>
                 {BRAND_OPTIONS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -102,7 +102,7 @@ export function MedicineFormDialog({
           </MedicineFormField>
 
           <MedicineFormField label="Supplier *" error={errors.supplier}>
-            <Select value={formData.supplier} onValueChange={(v) => updateField("supplier", v)}>
+            <Select value={formData.supplier} onValueChange={(v) => updateField("supplier", v ?? "")}>
               <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
               <SelectContent>
                 {SUPPLIER_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}

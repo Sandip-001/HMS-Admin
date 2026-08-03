@@ -48,4 +48,5 @@ export interface StockUpdateFormErrors {
   quantity?: string;
   gstPercent?: string;
   discountPercent?: string;
+  status?: string; 
 }

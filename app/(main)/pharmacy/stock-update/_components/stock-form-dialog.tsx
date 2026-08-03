@@ -55,10 +55,14 @@ export function StockFormDialog({
 
   const totalAmount = useMemo(() => calculateTotalAmount(formData), [formData]);
 
-  function updateField<K extends keyof StockUpdateFormData>(key: K, value: StockUpdateFormData[K]) {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  function updateField<
+  K extends keyof StockUpdateFormData & keyof StockUpdateFormErrors
+>(key: K, value: StockUpdateFormData[K]) {
+  setFormData((prev) => ({ ...prev, [key]: value }));
+  if (errors[key]) {
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
   }
+}
 
   function handleSave() {
     const validationErrors = validateStockForm(formData);
@@ -84,7 +88,7 @@ export function StockFormDialog({
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Purchase Details</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StockFormField label="Supplier *" error={errors.supplier}>
-                <Select value={formData.supplier} onValueChange={(v) => updateField("supplier", v)}>
+                <Select value={formData.supplier} onValueChange={(v) => updateField("supplier", v ?? "")}>
                   <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
                   <SelectContent>
                     {SUPPLIER_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -106,7 +110,7 @@ export function StockFormDialog({
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Medicine & Batch Details</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StockFormField label="Medicine Name *" error={errors.medicineName}>
-                <Select value={formData.medicineName} onValueChange={(v) => updateField("medicineName", v)}>
+                <Select value={formData.medicineName} onValueChange={(v) => updateField("medicineName", v ?? "")}>
                   <SelectTrigger><SelectValue placeholder="Select medicine" /></SelectTrigger>
                   <SelectContent>
                     {MEDICINE_OPTIONS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
