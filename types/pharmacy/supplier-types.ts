@@ -1,32 +1,28 @@
+// types/pharmacy/supplier-types.ts
 
-export interface Supplier {
-  id: string;
+export interface PharmacySupplier {
+  supplierId?: string;
   supplierName: string;
-  contactPerson: string;
-  gstNumber: string;
   phone: string;
   email: string;
   address: string;
-  paymentTerms: string;
-  createdOn: string;
+  supplierCode?: string;
+  supplierType: "Manufacturer" | "Distributor" | "Wholesaler" | "Retailer" | "";
+  drugLicenseNumber: string;
+  gst: string;
+  pan: string;
+  bankDetails: string;
+  ifsc: string;
+  creditLimit: string;
+  creditDays: string;
+  paymentTerms: "Immediate" | "7 Days" | "15 Days" | "30 Days" | "60 Days" | "90 Days" | "";
+  outstandingAmount: string;
+  performanceRating: string;
+  lastPurchaseDate: string;
+  activeStatus: "Active" | "Inactive";
+  createdDate?: string;
 }
 
-export interface SupplierFormData {
-  supplierName: string;
-  contactPerson: string;
-  gstNumber: string;
-  phone: string;
-  email: string;
-  address: string;
-  paymentTerms: string;
-}
+export type SupplierFormData = Omit<PharmacySupplier, "supplierId" | "supplierCode" | "createdDate">;
 
-export interface SupplierFormErrors {
-  supplierName?: string;
-  contactPerson?: string;
-  gstNumber?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  paymentTerms?: string;
-}
+export type SupplierFormErrors = Partial<Record<keyof SupplierFormData, string>>;

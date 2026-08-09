@@ -1,4 +1,4 @@
-import {AlertTriangle, ChartLine, CirclePile, LayoutDashboard, LucideIcon, Pill, Shuffle, Users} from "lucide-react";
+import {AlertTriangle, Boxes, Building2, ChartLine, CirclePile, LayoutDashboard, LucideIcon, Pill, Shuffle, Users, Warehouse} from "lucide-react";
 
 
 //Login Page 
@@ -28,24 +28,39 @@ export const SidebarOptions:SidebarOption[] = [
     path: "/pharmacy/dashboard",
   },
   {
-    name: "Categories & Brands",
+    name: "Category Master",
     icon: Shuffle,
-    path: "/pharmacy/categories-brands",
+    path: "/pharmacy/categories",
   },
   {
-    name: "Suppliers",
+    name: "Brand Master",
+    icon: Building2,
+    path: "/pharmacy/brands",
+  },
+  {
+    name: "Supplier Master",
     icon: Users,
     path: "/pharmacy/suppliers",
   },
   {
-    name: "Medicines",
+    name: "Medicine Master",
     icon: Pill,
     path: "/pharmacy/medicines",
   },
   {
-    name: "Stock Update",
+    name: "Batch Master",
+    icon: Boxes,
+    path: "/pharmacy/batches",
+  },
+  {
+    name: "Purchase Master",
     icon: CirclePile,
-    path: "/pharmacy/stock-update",
+    path: "/pharmacy/purchases",
+  },
+  {
+    name: "Inventory Master",
+    icon: Warehouse,
+    path: "/pharmacy/inventory",
   },
   {
     name: "Sales Insights",
