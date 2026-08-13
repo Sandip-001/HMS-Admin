@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Search, Boxes, PackageCheck, Lock, ArrowUpCircle, ArrowDownCircle,
   ArrowLeftRight, AlertTriangle, Clock, Ban, Eye, SlidersHorizontal,
-  ChevronLeft, ChevronRight, MapPin,
+  ChevronLeft, ChevronRight, MapPin, LayoutGrid, List as ListIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,9 @@ import { getStatusColor, getStockHealthPercent } from "@/lib/pharmacy/inventory-
 import { InventoryViewDialog } from "./_components/inventory-view-dialog";
 import { StockAdjustmentDialog } from "./_components/stock-adjustment-dialog";
 import type { InventoryItem, StockAdjustmentFormData } from "@/types/pharmacy/inventory-types";
+import { cn } from "@/lib/utils";
+
+type ViewMode = "list" | "grid";
 
 export default function PharmacyInventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>(INVENTORY_ITEMS);
@@ -23,6 +26,7 @@ export default function PharmacyInventoryPage() {
   const [warehouseFilter, setWarehouseFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<InventoryItem | null>(null);
@@ -160,268 +164,273 @@ export default function PharmacyInventoryPage() {
           ))}
         </div>
 
-        {/* Filters */}
+        {/* Filters + View Toggle */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Search medicine or code..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
-              />
-            </div>
-            <Select value={warehouseFilter} onValueChange={(v) => handleFilterChange(setWarehouseFilter, v ?? "All")}>
-              <SelectTrigger className="border-slate-200">
-                <SelectValue placeholder="Filter by warehouse" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Warehouses</SelectItem>
-                {WAREHOUSE_OPTIONS.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={categoryFilter} onValueChange={(v) => handleFilterChange(setCategoryFilter, v ?? "All")}>
-              <SelectTrigger className="border-slate-200">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Categories</SelectItem>
-                {CATEGORY_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v ?? "All")}>
-              <SelectTrigger className="border-slate-200">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Status</SelectItem>
-                {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Desktop Table */}
-        <div className="hidden xl:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto w-full">
-            <table className="w-full min-w-[1450px]">
-              <thead>
-                <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Medicine</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Warehouse</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Current Stock</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Available</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Reserved</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Issued/Purchased Today</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Transferred</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Damaged/Expired</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Blocked</th>
-                  <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Status</th>
-                  <th className="text-right text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {paginatedItems.map((item, index) => {
-                  const healthPercent = getStockHealthPercent(item);
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors" style={{ animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both` }}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
-                            {item.medicineName.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-slate-800 truncate max-w-[180px]">{item.medicineName}</p>
-                            <p className="text-xs text-slate-500 truncate max-w-[180px]">{item.medicineCode} • {item.category}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="truncate max-w-[140px]">{item.warehouse}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-bold text-slate-800">{item.currentStock.toLocaleString()} <span className="text-xs font-normal text-slate-500">{item.unit}</span></p>
-                        <div className="w-24 bg-slate-100 rounded-full h-1.5 mt-1">
-                          <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${healthPercent}%` }} />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-semibold text-green-700">{item.available.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{item.reserved.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-red-600">↑ {item.issuedToday.toLocaleString()}</p>
-                        <p className="text-xs text-green-600">↓ {item.purchasedToday.toLocaleString()}</p>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{item.transferred.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-orange-600">{item.damaged.toLocaleString()}</p>
-                        <p className="text-xs text-red-500">{item.expired.toLocaleString()} expired</p>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-purple-600 font-medium">{item.blocked.toLocaleString()}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <ActionMenu items={getActionItems(item)} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {paginatedItems.length > 0 && (
-            <div className="border-t border-slate-200 px-6 py-4 bg-slate-50/50">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-600">
-                  Showing {startIndex + 1} to {Math.min(endIndex, filteredItems.length)} of {filteredItems.length} items
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="border-slate-200">
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className={currentPage === page ? "bg-blue-600 hover:bg-blue-700" : "border-slate-200"}
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="border-slate-200">
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search medicine or code..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                />
               </div>
+              <Select value={warehouseFilter} onValueChange={(v) => handleFilterChange(setWarehouseFilter, v ?? "All")}>
+                <SelectTrigger className="border-slate-200 w-full">
+                  <SelectValue placeholder="Filter by warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Warehouses</SelectItem>
+                  {WAREHOUSE_OPTIONS.map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={(v) => handleFilterChange(setCategoryFilter, v ?? "All")}>
+                <SelectTrigger className="border-slate-200 w-full">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Categories</SelectItem>
+                  {CATEGORY_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={(v) => handleFilterChange(setStatusFilter, v ?? "All")}>
+                <SelectTrigger className="border-slate-200 w-full">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Status</SelectItem>
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
 
-        {/* Mobile / Tablet Cards */}
-        <div className="xl:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-          {paginatedItems.map((item, index) => {
-            const healthPercent = getStockHealthPercent(item);
-            return (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
-                style={{ animationDelay: `${index * 0.05}s` }}
+            {/* List / Grid Toggle */}
+            <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 self-start lg:self-auto">
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  viewMode === "list" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}
+                aria-label="List view"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0">
-                      {item.medicineName.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-slate-800 text-base truncate">{item.medicineName}</h3>
-                      <p className="text-xs text-slate-500 truncate">{item.medicineCode} • {item.warehouse}</p>
-                    </div>
-                  </div>
-                  <ActionMenu items={getActionItems(item)} />
-                </div>
-
-                <div className="flex items-center justify-between mb-3">
-                  <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
-                  <span className="text-xs text-slate-500">{healthPercent}% available</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5 mb-4">
-                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${healthPercent}%` }} />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 text-center mb-3">
-                  <div className="rounded-xl bg-slate-50 py-2">
-                    <p className="text-xs text-slate-500">Current</p>
-                    <p className="font-bold text-slate-800">{item.currentStock}</p>
-                  </div>
-                  <div className="rounded-xl bg-green-50 py-2">
-                    <p className="text-xs text-slate-500">Available</p>
-                    <p className="font-bold text-green-700">{item.available}</p>
-                  </div>
-                  <div className="rounded-xl bg-blue-50 py-2">
-                    <p className="text-xs text-slate-500">Reserved</p>
-                    <p className="font-bold text-blue-700">{item.reserved}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm border-t border-slate-100 pt-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Issued Today</span>
-                    <span className="font-medium text-red-600">{item.issuedToday}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Purchased</span>
-                    <span className="font-medium text-green-600">{item.purchasedToday}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Transferred</span>
-                    <span className="font-medium text-slate-700">{item.transferred}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Blocked</span>
-                    <span className="font-medium text-purple-600">{item.blocked}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Damaged</span>
-                    <span className="font-medium text-orange-600">{item.damaged}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Expired</span>
-                    <span className="font-medium text-red-600">{item.expired}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Mobile Pagination */}
-          {paginatedItems.length > 0 && (
-            <div className="md:col-span-2 flex items-center justify-between bg-white rounded-2xl border border-slate-200 px-4 py-3">
-              <p className="text-xs text-slate-600">
-                {startIndex + 1}-{Math.min(endIndex, filteredItems.length)} of {filteredItems.length}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="border-slate-200">
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-slate-700 px-2">{currentPage} / {totalPages}</span>
-                <Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="border-slate-200">
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
+                <ListIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">List</span>
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  viewMode === "grid" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden sm:inline">Grid</span>
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Empty State */}
-        {filteredItems.length === 0 && (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-              <Search className="w-8 h-8 text-slate-400" />
+        {/* LIST VIEW — Table on EVERY screen size (scrolls horizontally on small screens, never swaps to cards) */}
+        {viewMode === "list" && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full min-w-[1450px]">
+                <thead>
+                  <tr className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Medicine</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Warehouse</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Current Stock</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Available</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Reserved</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Issued/Purchased Today</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Transferred</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Damaged/Expired</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Blocked</th>
+                    <th className="text-left text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Status</th>
+                    <th className="text-right text-xs font-semibold text-slate-600 uppercase tracking-wider px-6 py-4 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedItems.map((item, index) => {
+                    const healthPercent = getStockHealthPercent(item);
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors" style={{ animation: `fadeInUp 0.3s ease-out ${index * 0.05}s both` }}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-md flex-shrink-0">
+                              {item.medicineName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-800 truncate max-w-[180px]">{item.medicineName}</p>
+                              <p className="text-xs text-slate-500 truncate max-w-[180px]">{item.medicineCode} • {item.category}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1 text-sm text-slate-600">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                            <span className="truncate max-w-[140px]">{item.warehouse}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-sm font-bold text-slate-800">{item.currentStock.toLocaleString()} <span className="text-xs font-normal text-slate-500">{item.unit}</span></p>
+                          <div className="w-24 bg-slate-100 rounded-full h-1.5 mt-1">
+                            <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${healthPercent}%` }} />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-semibold text-green-700">{item.available.toLocaleString()}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-slate-700">{item.reserved.toLocaleString()}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-sm text-red-600">↑ {item.issuedToday.toLocaleString()}</p>
+                          <p className="text-xs text-green-600">↓ {item.purchasedToday.toLocaleString()}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-slate-700">{item.transferred.toLocaleString()}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <p className="text-sm text-orange-600">{item.damaged.toLocaleString()}</p>
+                          <p className="text-xs text-red-500">{item.expired.toLocaleString()} expired</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-purple-600 font-medium">{item.blocked.toLocaleString()}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <ActionMenu items={getActionItems(item)} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <h3 className="text-lg font-semibold text-slate-700 mb-2">No inventory items found</h3>
-            <p className="text-slate-500">Try adjusting your search or filters</p>
+
+            {paginatedItems.length === 0 && <EmptyState />}
+
+            {paginatedItems.length > 0 && (
+              <PaginationBar
+                startIndex={startIndex}
+                endIndex={endIndex}
+                total={filteredItems.length}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={goToPage}
+              />
+            )}
           </div>
+        )}
+
+        {/* GRID VIEW — Cards on EVERY screen size, only shown when Grid is selected */}
+        {viewMode === "grid" && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedItems.map((item, index) => {
+                const healthPercent = getStockHealthPercent(item);
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 hover:shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0">
+                          {item.medicineName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-slate-800 text-base truncate">{item.medicineName}</h3>
+                          <p className="text-xs text-slate-500 truncate">{item.medicineCode} • {item.warehouse}</p>
+                        </div>
+                      </div>
+                      <ActionMenu items={getActionItems(item)} />
+                    </div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+                      <span className="text-xs text-slate-500">{healthPercent}% available</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mb-4">
+                      <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${healthPercent}%` }} />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 text-center mb-3">
+                      <div className="rounded-xl bg-slate-50 py-2">
+                        <p className="text-xs text-slate-500">Current</p>
+                        <p className="font-bold text-slate-800">{item.currentStock}</p>
+                      </div>
+                      <div className="rounded-xl bg-green-50 py-2">
+                        <p className="text-xs text-slate-500">Available</p>
+                        <p className="font-bold text-green-700">{item.available}</p>
+                      </div>
+                      <div className="rounded-xl bg-blue-50 py-2">
+                        <p className="text-xs text-slate-500">Reserved</p>
+                        <p className="font-bold text-blue-700">{item.reserved}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm border-t border-slate-100 pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Issued Today</span>
+                        <span className="font-medium text-red-600">{item.issuedToday}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Purchased</span>
+                        <span className="font-medium text-green-600">{item.purchasedToday}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Transferred</span>
+                        <span className="font-medium text-slate-700">{item.transferred}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Blocked</span>
+                        <span className="font-medium text-purple-600">{item.blocked}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Damaged</span>
+                        <span className="font-medium text-orange-600">{item.damaged}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">Expired</span>
+                        <span className="font-medium text-red-600">{item.expired}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {paginatedItems.length === 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200">
+                <EmptyState />
+              </div>
+            )}
+
+            {paginatedItems.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-200 mt-4">
+                <PaginationBar
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  total={filteredItems.length}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -435,6 +444,66 @@ export default function PharmacyInventoryPage() {
         item={adjustingItem}
         onSave={handleSaveAdjustment}
       />
+
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="text-center py-16">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+        <Search className="w-8 h-8 text-slate-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-slate-700 mb-2">No inventory items found</h3>
+      <p className="text-slate-500">Try adjusting your search or filters</p>
+    </div>
+  );
+}
+
+function PaginationBar({
+  startIndex,
+  endIndex,
+  total,
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  startIndex: number;
+  endIndex: number;
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="border-t border-slate-200 px-6 py-4 bg-slate-50/50 rounded-b-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-slate-600">
+          Showing {startIndex + 1} to {Math.min(endIndex, total)} of {total} items
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} className="border-slate-200">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange(page)}
+                className={currentPage === page ? "bg-blue-600 hover:bg-blue-700" : "border-slate-200"}
+              >
+                {page}
+              </Button>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} className="border-slate-200">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
