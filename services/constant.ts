@@ -11,6 +11,7 @@ import {
   Shuffle,
   Users,
   Warehouse,
+  Stethoscope,
 } from "lucide-react";
 
 // Login Page
@@ -40,6 +41,28 @@ export interface SidebarModule {
 }
 
 export const SidebarOptions: SidebarModule[] = [
+  {
+    moduleName: "OPD",
+    moduleIcon: Stethoscope,
+    items: [
+      {
+        name: "OPD Dashboard",
+        icon: LayoutDashboard,
+        path: "/opd/dashboard",
+      },
+    ],
+  },
+  {
+    moduleName: "IPD",
+    moduleIcon: Stethoscope,
+    items: [
+      {
+        name: "IPD Dashboard",
+        icon: LayoutDashboard,
+        path: "/ipd/dashboard",
+      },
+    ],
+  },
   {
     moduleName: "Pharmacy",
     moduleIcon: Pill,
