@@ -12,6 +12,7 @@ import {
   Users,
   Warehouse,
   Stethoscope,
+  IndianRupee,
 } from "lucide-react";
 
 // Login Page
@@ -60,6 +61,39 @@ export const SidebarOptions: SidebarModule[] = [
         name: "IPD Dashboard",
         icon: LayoutDashboard,
         path: "/ipd/dashboard",
+      },
+    ],
+  },
+  {
+    moduleName: "ICU",
+    moduleIcon: Stethoscope,
+    items: [
+      {
+        name: "ICU Dashboard",
+        icon: LayoutDashboard,
+        path: "/icu/dashboard",
+      },
+    ],
+  },
+  {
+    moduleName: "Emergency",
+    moduleIcon: Stethoscope,
+    items: [
+      {
+        name: "Emergency Dashboard",
+        icon: LayoutDashboard,
+        path: "/emergency/dashboard",
+      },
+    ],
+  },
+  {
+    moduleName: "Revenue Leakage",
+    moduleIcon: AlertTriangle,
+    items: [
+      {
+        name: "Revenue Leakage",
+        icon: IndianRupee,
+        path: "/revenue-leakage/dashboard",
       },
     ],
   },

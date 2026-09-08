@@ -21,15 +21,41 @@ import { Sparkles } from "lucide-react";
 import { SidebarOptions } from "@/services/constant";
 import { cn } from "@/lib/utils";
 
+const MODULE_GRADIENTS: Record<string, string> = {
+  OPD: "from-blue-500 to-cyan-500",
+  IPD: "from-indigo-500 to-blue-600",
+  ICU: "from-red-500 to-rose-600",
+  Emergency: "from-orange-500 to-red-600",
+  "Revenue Leakage": "from-amber-500 to-orange-600",
+  Pharmacy: "from-emerald-500 to-teal-600",
+};
+
+const MODULE_ACCENT_TEXT: Record<string, string> = {
+  OPD: "text-white",
+  IPD: "text-white",
+  ICU: "text-white",
+  Emergency: "text-white",
+  "Revenue Leakage": "text-white",
+  Pharmacy: "text-white",
+};
+
+function getModuleGradient(moduleName: string) {
+  return MODULE_GRADIENTS[moduleName] ?? "from-slate-500 to-slate-600";
+}
+
+function getModuleAccent(moduleName: string) {
+  return MODULE_ACCENT_TEXT[moduleName] ?? "text-slate-600";
+}
+
 export function AppSidebar() {
   const path = usePathname();
 
   return (
-    <Sidebar className="border-r border-slate-200 bg-white">
-      {/* Logo Section — 70px header, matches PharmaCore reference */}
+    <Sidebar className="border-r border-slate-200/60 bg-gradient-to-b from-white via-white to-slate-50/50">
+      {/* Logo Section */}
       <SidebarHeader className="border-b border-slate-100 px-4 py-0">
         <div className="flex h-[70px] items-center gap-3">
-          <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl shadow-sm shadow-blue-600/30">
+          <div className="relative grid h-10 w-10 flex-shrink-0 place-items-center overflow-hidden rounded-xl shadow-md shadow-blue-600/20 ring-1 ring-slate-100">
             <Image
               src="/logo1.png"
               alt="logo"
@@ -40,7 +66,9 @@ export function AppSidebar() {
           </div>
           <div className="min-w-0">
             <p className="truncate text-[15px] font-bold leading-tight text-slate-900">
-              <span className="text-blue-600">Leads</span>
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Leads
+              </span>
             </p>
             <p className="text-[12px] font-bold uppercase tracking-widest text-red-500">
               Health Care
@@ -49,81 +77,117 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      {/* Sidebar Menu — one grouped section per module */}
-      <SidebarContent className="px-2 py-3 gap-1">
-        {SidebarOptions.map((module) => (
-          <SidebarGroup key={module.moduleName} className="py-1">
-            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              {module.moduleName}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
-                {module.items.map((option) => {
-                  const isActive = path === option.path;
-                  return (
-                    <SidebarMenuItem key={option.path}>
-                      <SidebarMenuButton
-                        className={`h-auto rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
-                        path == option.path && "bg-blue-100"
-                      }`}
-                      >
-                        <Link
-                          href={option.path}
-                          className="flex w-full items-center gap-2.5 cursor-pointer"
-                        >
-                          <option.icon
-                            className={cn(
-                              "h-[17px] w-[17px] flex-shrink-0",
-                              isActive ? "text-blue-600" : "text-slate-500"
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "truncate",
-                              isActive ? "text-blue-600" : "text-slate-700"
-                            )}
-                          >
-                            {option.name}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
-                      {option.badge !== undefined && (
-                        <SidebarMenuBadge
+      {/* Scrollable menu area — scroll works, scrollbar hidden */}
+      <SidebarContent
+        className={cn(
+          "gap-1 px-2 py-3",
+          "[scrollbar-width:none]", // Firefox
+          "[&::-webkit-scrollbar]:hidden", // Chrome/Safari/Edge
+        )}
+        style={{ msOverflowStyle: "none" }} // IE/legacy Edge
+      >
+        {SidebarOptions.map((module) => {
+          const gradient = getModuleGradient(module.moduleName);
+          const accent = getModuleAccent(module.moduleName);
+
+          return (
+            <SidebarGroup key={module.moduleName} className="py-1">
+              <SidebarGroupLabel className="px-3 pb-1.5 pt-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <span className={cn("h-1.5 w-1.5 rounded-full bg-gradient-to-br", gradient)} />
+                  {module.moduleName}
+                </span>
+              </SidebarGroupLabel>
+
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-0.5">
+                  {module.items.map((option) => {
+                    const isActive = path === option.path;
+
+                    return (
+                      <SidebarMenuItem key={option.path}>
+                        <SidebarMenuButton
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                            option.badgeVariant === "danger"
-                              ? "bg-red-50 text-red-600"
-                              : "bg-blue-50 text-blue-600"
+                            "group relative h-auto overflow-hidden rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                            isActive
+                              ? "bg-gradient-to-r shadow-md shadow-slate-200/60"
+                              : "hover:bg-slate-100/80",
+                            isActive && gradient,
                           )}
                         >
-                          {option.badge}
-                        </SidebarMenuBadge>
-                      )}
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                          {isActive ? (
+                            <span
+                              className={cn(
+                                "absolute inset-0 bg-gradient-to-r opacity-[0.12]",
+                                gradient,
+                              )}
+                            />
+                          ) : null}
+
+                          {isActive ? (
+                            <span
+                              className={cn(
+                                "absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-gradient-to-b",
+                                gradient,
+                              )}
+                            />
+                          ) : null}
+
+                          <Link
+                            href={option.path}
+                            className="relative flex w-full items-center gap-2.5 cursor-pointer"
+                          >
+                            <span
+                              className={cn(
+                                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200",
+                                isActive
+                                  ? cn("bg-gradient-to-br text-white shadow-sm", gradient)
+                                  : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700",
+                              )}
+                            >
+                              <option.icon className="h-[15px] w-[15px]" />
+                            </span>
+
+                            <span
+                              className={cn(
+                                "truncate transition-colors",
+                                isActive ? cn("font-semibold", accent) : "text-slate-600 group-hover:text-slate-900",
+                              )}
+                            >
+                              {option.name}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+
+                        {option.badge !== undefined && (
+                          <SidebarMenuBadge
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm",
+                              option.badgeVariant === "danger"
+                                ? "bg-gradient-to-r from-red-500 to-rose-500 text-white"
+                                : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white",
+                            )}
+                          >
+                            {option.badge}
+                          </SidebarMenuBadge>
+                        )}
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
-      {/* Footer — promo card + copyright, matches PharmaCore reference
+      {/* Footer — promo card + copyright */}
       <SidebarFooter className="p-3">
-        <div className="rounded-xl bg-slate-900 p-4 text-white">
-          <p className="flex items-center gap-1.5 text-[11px] font-bold text-blue-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            SYSTEM INSIGHTS
-          </p>
-          <p className="mt-1.5 text-sm font-semibold">More modules coming soon</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-            OPD, IPD, Laboratory and Billing modules will appear here as new sections.
-          </p>
-        </div>
+       
         <p className="mt-3 text-center text-[11px] text-slate-400">
-          © 2025 Your Company
+          © 2026 Leads Health Care. All rights reserved.
         </p>
-      </SidebarFooter> */}
+      </SidebarFooter>
     </Sidebar>
   );
 }
